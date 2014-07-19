@@ -78,5 +78,5 @@ fi;
 
 ENC
 DIAL
-echo $REC
+#echo $REC
 exec $REC
