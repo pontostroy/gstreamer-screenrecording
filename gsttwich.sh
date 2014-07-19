@@ -16,7 +16,7 @@ FORMAT="I420"
 ##Software
 ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency"
 ##OMX
-OMX="! omxh264enc control-rate=1 ! h264parse  "
+OMX="! omxh264enc ! h264parse  "
 ##VAAPI
 VAAPI="! vaapiencode_h264  ! h264parse "
 SENC="! voaacenc bitrate=128000 ! aacparse"
@@ -78,5 +78,5 @@ fi;
 
 ENC
 DIAL
-#echo $REC
+echo $REC
 exec $REC
