@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ## Run with any argument to enable sound recording /rec.sh s 
-SAVE Twich stream key to .config/twitch.key
+#SAVE Twich stream key to .config/twitch.key
 
 TKEY=`cat $HOME/.config/twitch.key`
 GST="gst-launch-1.0"
