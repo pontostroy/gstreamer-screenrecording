@@ -6,10 +6,10 @@ Patches and scripts for gstreamer
 Scripts
 ```
 rec.sh - Record screen or window  with VAAPI(intel I420 or NV12), OMX(radeon NV12), software (x264enc I420 or NV12) to mkv file, with or without sound.
-Require gstreamer-1.0, intel-vaapi or mesa-omx, pulseaudio.
+Require gstreamer-1.0, gst-omx, gstreamer-vaapi-plugin, intel-vaapi or mesa-omx, pulseaudio.
 
 gsttwich.sh - Record screen or window  VAAPI(broken, twich dont show video ), OMX(radeon NV12), software (x264enc I420 or NV12) and streaming it to twich.
-Require gstreamer-1.0, intel-vaapi or mesa-omx, pulseaudio.
+Require gstreamer-1.0, gst-omx, gstreamer-vaapi-plugin, intel-vaapi or mesa-omx, pulseaudio.
 ```
 
 
