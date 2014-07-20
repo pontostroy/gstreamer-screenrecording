@@ -9,7 +9,7 @@ GSTIN="gst-inspect-1.0"
 FPSIN="30/1"
 #FPSOUT="25/1"
 TIME=$(date +"%Y-%m-%d_%H%M%S")
-FILEMANE="/disk/tmp/rec_$TIME.mkv"
+FILEMANE="$HOME/rec_$TIME.mkv"
 MUX=" matroskamux name="muxer" "
 FOUT=" ! progressreport  ! filesink location=$FILEMANE"
 REC=""
@@ -20,7 +20,7 @@ ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency "
 ##OMX
 OMX="! omxh264enc ! h264parse "
 ##VAAPI
-VAAPI="! vaapiencode_h264 ! h264parse "
+VAAPI="! vaapiencode_h264  ! h264parse "
 
 #SOUND SOURCE
 ##pactl list | grep -A2 'Source #' | grep 'Name: ' | cut -d" " -f2
@@ -29,7 +29,7 @@ VAAPI="! vaapiencode_h264 ! h264parse "
 SINPUT="alsa_output.pci-0000_00_1b.0.analog-stereo.monitor"
 ##SOUND
 if [ $# -gt 0 ]; then
-SOUND=" pulsesrc device=$SINPUT ! queue ! voaacenc bitrate=128000 ! aacparse ! queue ! muxer."
+SOUND=" pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! queue ! voaacenc bitrate=128000 ! aacparse ! queue ! muxer."
 echo "Sound ON"
 else
 SOUND=" "

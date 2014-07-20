@@ -16,9 +16,9 @@ FORMAT="I420"
 ##Software
 ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency"
 ##OMX
-OMX="! omxh264enc ! h264parse  "
+OMX="! omxh264enc   ! h264parse  "
 ##VAAPI
-VAAPI="! vaapiencode_h264  ! h264parse "
+VAAPI="! vaapiencode_h264 ! h264parse "
 SENC="! voaacenc bitrate=128000 ! aacparse"
 
 #SOUND SOURCE 
@@ -65,10 +65,10 @@ VID=`kdialog --menu "CHOOSE RECORD MODE:" A "FULL SCREEN REC" B "WINDOW REC";`
 
 if [ "$?" = 0 ]; then
 	if [ "$VID" = A ]; then
-		REC="$GST -e  ximagesrc  use-damage=0 ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream  $ENCODER ! queue ! $FOUT pulsesrc device=$SINPUT ! queue  $SENC ! queue ! muxer. muxer. ! progressreport ! rtmpsink location=$URL$TKEY" 
+		REC="$GST -e  ximagesrc  use-damage=0 ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream  $ENCODER ! queue ! $FOUT pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! queue  $SENC ! queue ! muxer. muxer. ! progressreport ! rtmpsink location=$URL$TKEY" 
 	elif [ "$VID" = B ]; then
 	        XID=`xwininfo |grep 'Window id' | awk '{print $4;}'`
-		REC="$GST -e  ximagesrc  xid=$XID  use-damage=0 ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream  $ENCODER ! queue ! $FOUT pulsesrc device=$SINPUT ! queue  $SENC ! queue ! muxer. muxer. ! progressreport ! rtmpsink location=$URL$TKEY" 
+		REC="$GST -e  ximagesrc  xid=$XID  use-damage=0 ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream  $ENCODER ! queue ! $FOUT pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! queue  $SENC ! queue ! muxer. muxer. ! progressreport ! rtmpsink location=$URL$TKEY" 
 	else
 		echo "ERROR";
 	fi;
@@ -78,5 +78,5 @@ fi;
 
 ENC
 DIAL
-echo $REC
+#echo $REC
 exec $REC
