@@ -17,6 +17,12 @@ Run with -s argument to enable sound recording /rec.sh -s
 
 
 gsttwich.sh - Record screen or window  VAAPI(broken, twich dont show video ), OMX(radeon NV12), software (x264enc I420 or NV12) and streaming it to twich.
+
+Run with
+         -n for nogui mode /rec.sh -n=v for vaapi; -n=o for omx; -n=x for x264enc 
+         -h show help message"
+
+
 Require kdialog, gstreamer-1.0, gst-omx, gstreamer-vaapi-plugin, intel-vaapi or mesa-omx, pulseaudio.
 ```
 
