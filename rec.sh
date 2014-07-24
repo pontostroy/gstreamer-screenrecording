@@ -1,15 +1,18 @@
 #!/bin/bash
 
-## Run with any argument to enable sound recording /rec.sh s 
 
 
+
+OPTIND=1
+BELAGIOBIN="/usr/bin/omxregister-bellagio"
 GST="gst-launch-1.0"
 GSTIN="gst-inspect-1.0"
 ##FPS 
 FPSIN="30/1"
 #FPSOUT="25/1"
 TIME=$(date +"%Y-%m-%d_%H%M%S")
-FILEMANE="$HOME/rec_$TIME.mkv"
+DIRM="$HOME"
+FILEMANE="$DIRM/rec_$TIME.mkv"
 MUX=" matroskamux name="muxer" "
 FOUT=" ! progressreport  ! filesink location=$FILEMANE"
 REC=""
@@ -21,20 +24,90 @@ ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency "
 OMX="! omxh264enc ! h264parse "
 ##VAAPI
 VAAPI="! vaapiencode_h264  ! h264parse "
-
+NOGUI=""
 #SOUND SOURCE
 ##pactl list | grep -A2 'Source #' | grep 'Name: ' | cut -d" " -f2
 ##alsa_output.pci-0000_00_1b.0.analog-stereo.monitor
 ##alsa_input.usb-Sonix_Technology_Co.__Ltd._Trust_Webcam-02-Webcam.analog-mono
 SINPUT="alsa_output.pci-0000_00_1b.0.analog-stereo.monitor"
 ##SOUND
-if [ $# -gt 0 ]; then
-SOUND=" pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! queue ! voaacenc bitrate=128000 ! aacparse ! queue ! muxer."
-echo "Sound ON"
-else
+#if [ $# -gt 0 ]; then
+SOUNDC=" pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! queue ! voaacenc bitrate=128000 ! aacparse ! queue ! muxer."
+#echo "Sound ON"
+#else
 SOUND=" "
-echo "Sound Off"
-fi
+#echo "Sound Off"
+#fi
+
+function show_help {
+echo "Run with -s argument to enable sound recording /rec.sh -s
+         -d to set dir for saving *.mkv /rec.sh -d /tmp
+         -n for nogui mode /rec.sh -n=v for vaapi; -n=o for omx; -n=x for x264enc 
+         /rec.sh -s -d=/tmp -n=o record screen with sound using omx and save to /tmp
+         -h show this message"
+}
+
+
+while getopts "h?sdn:" opt; do
+    case "$opt" in
+    h|\?)
+        show_help
+        exit 0
+        ;;
+    s)  SOUND=$SOUNDC
+        echo "Sound ON"
+        ;;
+    d)  DIRM=$OPTARG
+        FILEMANE="$DIRM/rec_$TIME.mkv"
+        echo "Video saving to $DIRM"
+        ;;
+    n)  NOGUI=$OPTARG
+        echo "Nogui mode"
+        case "$NOGUI" in 
+        =v)
+        if  [[ '$GSTIN | grep vaapiencode_h264 >/dev/null'  ]]
+	     then ENCODER="$VAAPI "
+	     echo "Using vaapiencode_h264 encoder"
+	     REC="$GST -e   ximagesrc  use-damage=0 ! queue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream   $ENCODER ! queue ! $MUX  $SOUND  muxer. $FOUT"
+             echo $REC
+             exec $REC
+             exit 0
+	     else echo "Gstreamer vaapiencode_h264 not found"
+	     exit 0
+	 fi
+	 ;;
+        =o) 
+        if  [[ '$GSTIN | grep omxh264enc >/dev/null'  ]]
+	      then ENCODER="$OMX"
+	      FORMAT="NV12"
+	      echo "Using omxh264enc encoder"
+	      REC="$GST -e   ximagesrc  use-damage=0 ! queue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream   $ENCODER ! queue ! $MUX  $SOUND  muxer. $FOUT"
+              echo $REC
+              exec $REC
+              exit 0
+	      else echo "Gstreamer omxh264enc not found"
+	      exit 0
+	fi
+        ;;
+        =x)
+        ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency "
+        REC="$GST -e   ximagesrc  use-damage=0 ! queue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream   $ENCODER ! queue ! $MUX  $SOUND  muxer. $FOUT"
+        echo $REC
+        exec $REC
+        exit 0
+        ;;
+        *)
+         echo "Use n=v for vaapi; n=o for omx; n=x for x264enc"
+         exit 0
+        ;;
+        esac
+    esac
+done
+
+shift $((OPTIND-1))
+
+[ "$1" = "--" ] && shift
+
 
 function ENC {
 DI=`kdialog --menu "CHOOSE ENCODER:" 1 "Radeon OMX" 2 "Intel VAAPI" 3 "SOFTWARE";`
@@ -42,7 +115,12 @@ DI=`kdialog --menu "CHOOSE ENCODER:" 1 "Radeon OMX" 2 "Intel VAAPI" 3 "SOFTWARE"
 if [ "$?" = 0 ]; then
 case "$DI" in 
 	1)
-	/usr/bin/omxregister-bellagio
+	if [ -f $BELAGIOBIN ]; 
+	then 
+	$BELAGIOBIN
+	else
+	echo "omxregister-bellagio not found"
+	fi
 	   if  [[ '$GSTIN | grep omxh264enc >/dev/null'  ]]
 	      then ENCODER="$OMX"
 	      FORMAT="NV12"
@@ -82,6 +160,9 @@ if [ "$?" = 0 ]; then
 	fi;
 fi;
 }
+
+
+
 
 ENC
 DIAL
