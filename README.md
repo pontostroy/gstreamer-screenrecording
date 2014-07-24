@@ -8,6 +8,14 @@ Scripts
 rec.sh - Record screen or window  with VAAPI(intel I420 or NV12), OMX(radeon NV12), software (x264enc I420 or NV12) to mkv file, with or without sound.
 Require kdialog, gstreamer-1.0, gst-omx, gstreamer-vaapi-plugin, intel-vaapi or mesa-omx, pulseaudio.
 
+Run with -s argument to enable sound recording /rec.sh -s
+         -d to set dir for saving *.mkv /rec.sh -d /tmp
+         -n for nogui mode /rec.sh -n=v for vaapi; -n=o for omx; -n=x for x264enc 
+         /rec.sh -s -d=/tmp -n=o record screen with sound using omx and save to /tmp
+         -h show help message
+
+
+
 gsttwich.sh - Record screen or window  VAAPI(broken, twich dont show video ), OMX(radeon NV12), software (x264enc I420 or NV12) and streaming it to twich.
 Require kdialog, gstreamer-1.0, gst-omx, gstreamer-vaapi-plugin, intel-vaapi or mesa-omx, pulseaudio.
 ```
