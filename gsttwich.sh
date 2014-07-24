@@ -3,6 +3,9 @@
 ## Run with any argument to enable sound recording /rec.sh s 
 #SAVE Twich stream key to .config/twitch.key
 
+OPTIND=1
+
+BELAGIOBIN="/usr/bin/omxregister-bellagio"
 TKEY=`cat $HOME/.config/twitch.key`
 GST="gst-launch-1.0"
 GSTIN="gst-inspect-1.0"
@@ -28,13 +31,90 @@ SENC="! voaacenc bitrate=128000 ! aacparse"
 SINPUT="alsa_output.pci-0000_00_1b.0.analog-stereo.monitor"
 
 
+
+
+function show_help {
+echo "Run with
+         -n for nogui mode /rec.sh -n=v for vaapi; -n=o for omx; -n=x for x264enc 
+         -h show help message"
+}
+         
+         
+         
+while getopts "h?n:" opt; do
+    case "$opt" in
+    h|\?)
+        show_help
+        exit 0
+        ;;
+
+    n)  NOGUI=$OPTARG
+        echo "Nogui mode"
+        case "$NOGUI" in 
+        =v)
+        if  [[ '$GSTIN | grep vaapiencode_h264 >/dev/null'  ]]
+	     then ENCODER="$VAAPI "
+	     echo "Using vaapiencode_h264 encoder"
+	     REC="$GST -e  ximagesrc  use-damage=0 ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream  $ENCODER ! queue ! $FOUT pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! queue  $SENC ! queue ! muxer. muxer. ! progressreport ! rtmpsink location=$URL$TKEY" 
+             #echo $REC
+             exec $REC
+             exit 0
+	     else echo "Gstreamer vaapiencode_h264 not found"
+	     exit 0
+	 fi
+	 ;;
+        =o) 
+        if [ -f $BELAGIOBIN ]; 
+	then 
+	$BELAGIOBIN
+	else
+	echo "omxregister-bellagio not found"
+	fi
+        if  [[ '$GSTIN | grep omxh264enc >/dev/null'  ]]
+	      then ENCODER="$OMX"
+	      FORMAT="NV12"
+	      echo "Using omxh264enc encoder"
+	      REC="$GST -e  ximagesrc  use-damage=0 ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream  $ENCODER ! queue ! $FOUT pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! queue  $SENC ! queue ! muxer. muxer. ! progressreport ! rtmpsink location=$URL$TKEY" 
+              #echo $REC
+              exec $REC
+              exit 0
+	      else echo "Gstreamer omxh264enc not found"
+	      exit 0
+	fi
+        ;;
+        =x)
+        ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency "
+        REC="$GST -e  ximagesrc  use-damage=0 ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream  $ENCODER ! queue ! $FOUT pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! queue  $SENC ! queue ! muxer. muxer. ! progressreport ! rtmpsink location=$URL$TKEY"
+        #echo $REC
+        exec $REC
+        exit 0
+        ;;
+        *)
+         echo "Use n=v for vaapi; n=o for omx; n=x for x264enc"
+         exit 0
+        ;;
+        esac
+    esac
+done
+
+shift $((OPTIND-1))
+
+[ "$1" = "--" ] && shift         
+         
+         
+
 function ENC {
 DI=`kdialog --menu "CHOOSE ENCODER:" 1 "Radeon OMX" 2 "Intel VAAPI" 3 "SOFTWARE";`
 
 if [ "$?" = 0 ]; then
 case "$DI" in 
 	1)
-	/usr/bin/omxregister-bellagio
+	if [ -f $BELAGIOBIN ]; 
+	then 
+	$BELAGIOBIN
+	else
+	echo "omxregister-bellagio not found"
+	fi
 	   if  [[ '$GSTIN | grep omxh264enc >/dev/null'  ]]
 	      then ENCODER="$OMX"
 	      FORMAT="NV12"

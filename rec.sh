@@ -161,9 +161,6 @@ if [ "$?" = 0 ]; then
 fi;
 }
 
-
-
-
 ENC
 DIAL
 echo $REC
