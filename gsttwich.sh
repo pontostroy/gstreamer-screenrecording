@@ -21,7 +21,7 @@ ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency"
 ##OMX
 OMX="! omxh264enc   ! h264parse  "
 ##VAAPI
-VAAPI="! vaapiencode_h264 ! h264parse "
+VAAPI="! vaapiencode_h264 ! vaapiparse_h264 "
 SENC="! voaacenc bitrate=128000 ! aacparse"
 
 #SOUND SOURCE 
