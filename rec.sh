@@ -12,7 +12,7 @@ FPSIN="30/1"
 #FPSOUT="25/1"
 TIME=$(date +"%Y-%m-%d_%H%M%S")
 DIRM="$HOME"
-FILEMANE="$DIRM/rec_$TIME.mkv"
+FILEMANE=""
 MUX=" matroskamux name="muxer" "
 FOUT=" ! progressreport  ! filesink location=$FILEMANE"
 REC=""
@@ -108,6 +108,8 @@ shift $((OPTIND-1))
 
 [ "$1" = "--" ] && shift
 
+FILEMANE="$DIRM/rec_$TIME.mkv"
+FOUT=" ! progressreport  ! filesink location=$FILEMANE"
 
 function ENC {
 DI=`kdialog --menu "CHOOSE ENCODER:" 1 "Radeon OMX" 2 "Intel VAAPI" 3 "SOFTWARE";`
