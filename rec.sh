@@ -43,12 +43,12 @@ function show_help {
 echo "Run with -s argument to enable sound recording /rec.sh -s
          -d to set dir for saving *.mkv /rec.sh -d /tmp
          -n for nogui mode /rec.sh -n=v for vaapi; -n=o for omx; -n=x for x264enc 
-         /rec.sh -s -d=/tmp -n=o record screen with sound using omx and save to /tmp
+         /rec.sh -s -d /tmp -n=o record screen with sound using omx and save to /tmp
          -h show help message"
 }
 
 
-while getopts "h?sdn:" opt; do
+while getopts ":h?sd:n:" opt; do
     case "$opt" in
     h|\?)
         show_help
@@ -57,7 +57,7 @@ while getopts "h?sdn:" opt; do
     s)  SOUND=$SOUNDC
         echo "Sound ON"
         ;;
-    d)  DIRM=$OPTARG
+    d)  DIRM="$OPTARG"
         FILEMANE="$DIRM/rec_$TIME.mkv"
         echo "Video saving to $DIRM"
         ;;

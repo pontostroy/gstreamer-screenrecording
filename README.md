@@ -11,7 +11,7 @@ Require kdialog, gstreamer-1.0, gst-omx, gstreamer-vaapi-plugin, intel-vaapi or 
 Run with -s argument to enable sound recording /rec.sh -s
          -d to set dir for saving *.mkv /rec.sh -d /tmp
          -n for nogui mode /rec.sh -n=v for vaapi; -n=o for omx; -n=x for x264enc 
-         /rec.sh -s -d=/tmp -n=o record screen with sound using omx and save to /tmp
+         /rec.sh -s -d /tmp -n=o record screen with sound using omx and save to /tmp
          -h show help message
 
 
