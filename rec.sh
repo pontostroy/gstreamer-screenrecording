@@ -32,7 +32,7 @@ NOGUI=""
 SINPUT="alsa_output.pci-0000_00_1b.0.analog-stereo.monitor"
 ##SOUND
 #if [ $# -gt 0 ]; then
-SOUNDC=" pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! queue ! voaacenc bitrate=128000 ! aacparse ! queue ! muxer."
+SOUNDC=" pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! queue ! lamemp3enc bitrate=192 cbr=true ! queue ! muxer."
 #echo "Sound ON"
 #else
 SOUND=" "
