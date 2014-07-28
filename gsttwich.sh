@@ -19,9 +19,9 @@ FORMAT="I420"
 ##Software
 ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency"
 ##OMX
-OMX="! omxh264enc   ! h264parse  "
+OMX="! omxh264enc   !  video/x-h264,stream-format=byte-stream,profile=high ! h264parse  "
 ##VAAPI
-VAAPI="! vaapiencode_h264 ! vaapiparse_h264 "
+VAAPI="! vaapiencode_h264 !  video/x-h264,stream-format=byte-stream,profile=high ! vaapiparse_h264 config-interval=2 "
 SENC="! voaacenc bitrate=128000 ! aacparse"
 
 #SOUND SOURCE 
