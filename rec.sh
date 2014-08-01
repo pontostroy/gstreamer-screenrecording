@@ -14,7 +14,7 @@ TIME=$(date +"%Y-%m-%d_%H%M%S")
 DIRM="$HOME"
 FILEMANE=""
 MUX=" matroskamux name="muxer" "
-FOUT=" ! progressreport name="Rec time" ! filesink location=$FILEMANE"
+FOUT=" ! progressreport name="Rec_time" ! filesink location=$FILEMANE"
 REC=""
 #FORMAT I420 or NV12
 FORMAT="I420"
@@ -23,7 +23,7 @@ ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency "
 ##OMX
 OMX="! omxh264enc ! h264parse "
 ##VAAPI
-VAAPI="! vaapiencode_h264  ! h264parse "
+VAAPI="! vaapiencode_h264  ! vaapiparse_h264 "
 NOGUI=""
 #SOUND SOURCE
 ##pactl list | grep -A2 'Source #' | grep 'Name: ' | cut -d" " -f2
@@ -32,7 +32,7 @@ NOGUI=""
 SINPUT="alsa_output.pci-0000_00_1b.0.analog-stereo.monitor"
 ##SOUND
 #if [ $# -gt 0 ]; then
-SOUNDC=" pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! queue ! lamemp3enc bitrate=192 cbr=true ! queue ! muxer."
+SOUNDC=" pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! multiqueue ! lamemp3enc bitrate=192 cbr=true ! multiqueue ! muxer."
 #echo "Sound ON"
 #else
 SOUND=" "
@@ -68,7 +68,7 @@ while getopts ":h?sd:n:" opt; do
         if  [[ '$GSTIN | grep vaapiencode_h264 >/dev/null'  ]]
 	     then ENCODER="$VAAPI "
 	     echo "Using vaapiencode_h264 encoder"
-	     REC="$GST -e   ximagesrc  use-damage=0 ! queue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream   $ENCODER ! queue ! $MUX  $SOUND  muxer. $FOUT"
+	     REC="$GST -e   ximagesrc  use-damage=0 ! multiqueue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
              echo $REC
              exec $REC
              exit 0
@@ -81,7 +81,7 @@ while getopts ":h?sd:n:" opt; do
 	      then ENCODER="$OMX"
 	      FORMAT="NV12"
 	      echo "Using omxh264enc encoder"
-	      REC="$GST -e   ximagesrc  use-damage=0 ! queue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream   $ENCODER ! queue ! $MUX  $SOUND  muxer. $FOUT"
+	      REC="$GST -e   ximagesrc  use-damage=0 ! multiqueue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
               echo $REC
               exec $REC
               exit 0
@@ -91,7 +91,7 @@ while getopts ":h?sd:n:" opt; do
         ;;
         =x)
         ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency "
-        REC="$GST -e   ximagesrc  use-damage=0 ! queue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream   $ENCODER ! queue ! $MUX  $SOUND  muxer. $FOUT"
+        REC="$GST -e   ximagesrc  use-damage=0 ! multiqueue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
         echo $REC
         exec $REC
         exit 0
@@ -109,7 +109,7 @@ shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
 
 FILEMANE="$DIRM/rec_$TIME.mkv"
-FOUT=" ! progressreport name="Rec time" ! filesink location=$FILEMANE"
+FOUT=" ! progressreport name="Rec_time" ! filesink location=$FILEMANE"
 
 function ENC {
 DI=`kdialog --menu "CHOOSE ENCODER:" 1 "Radeon OMX" 2 "Intel VAAPI" 3 "SOFTWARE";`
@@ -153,10 +153,10 @@ VID=`kdialog --menu "CHOOSE RECORD MODE:" A "FULL SCREEN REC" B "WINDOW REC";`
 
 if [ "$?" = 0 ]; then
 	if [ "$VID" = A ]; then
-		REC="$GST -e   ximagesrc  use-damage=0 ! queue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream   $ENCODER ! queue ! $MUX  $SOUND  muxer. $FOUT"
+		REC="$GST -e   ximagesrc  use-damage=0 ! multiqueue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
 	elif [ "$VID" = B ]; then
 	        XID=`xwininfo |grep 'Window id' | awk '{print $4;}'`
-		REC="$GST -e    ximagesrc  xid=$XID  use-damage=0 ! queue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream   $ENCODER ! queue ! $MUX  $SOUND  muxer. $FOUT"
+		REC="$GST -e    ximagesrc  xid=$XID  use-damage=0 ! multiqueue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
 	else
 		echo "ERROR";
 	fi;
