@@ -14,7 +14,7 @@ TIME=$(date +"%Y-%m-%d_%H%M%S")
 DIRM="$HOME"
 FILEMANE=""
 MUX=" matroskamux name="muxer" "
-FOUT=" ! progressreport  ! filesink location=$FILEMANE"
+FOUT=" ! progressreport name="Rec time" ! filesink location=$FILEMANE"
 REC=""
 #FORMAT I420 or NV12
 FORMAT="I420"
@@ -109,7 +109,7 @@ shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
 
 FILEMANE="$DIRM/rec_$TIME.mkv"
-FOUT=" ! progressreport  ! filesink location=$FILEMANE"
+FOUT=" ! progressreport name="Rec time" ! filesink location=$FILEMANE"
 
 function ENC {
 DI=`kdialog --menu "CHOOSE ENCODER:" 1 "Radeon OMX" 2 "Intel VAAPI" 3 "SOFTWARE";`
