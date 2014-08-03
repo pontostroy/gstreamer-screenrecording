@@ -1,9 +1,8 @@
 #!/bin/bash
 
 
-
-
 OPTIND=1
+DNUM=0
 BELAGIOBIN="/usr/bin/omxregister-bellagio"
 GST="gst-launch-1.0"
 GSTIN="gst-inspect-1.0"
@@ -42,13 +41,14 @@ SOUND=" "
 function show_help {
 echo "Run with -s argument to enable sound recording /rec.sh -s
          -d to set dir for saving *.mkv /rec.sh -d /tmp
-         -n for nogui mode /rec.sh -n=v for vaapi; -n=o for omx; -n=x for x264enc 
+         -n for nogui mode /rec.sh -n=v for vaapi; -n=o for omx; -n=x for x264enc
+         -x nubmer of x-server  /rec.sh -x 0
          /rec.sh -s -d /tmp -n=o record screen with sound using omx and save to /tmp
          -h show help message"
 }
 
 
-while getopts ":h?sd:n:" opt; do
+while getopts ":h?sd:n:x:" opt; do
     case "$opt" in
     h|\?)
         show_help
@@ -56,6 +56,9 @@ while getopts ":h?sd:n:" opt; do
         ;;
     s)  SOUND=$SOUNDC
         echo "Sound ON"
+        ;;
+    x)  DNUM="$OPTARG"
+        echo "X-server nubmer $DNUM"
         ;;
     d)  DIRM="$OPTARG"
         FILEMANE="$DIRM/rec_$TIME.mkv"
@@ -68,7 +71,7 @@ while getopts ":h?sd:n:" opt; do
         if  [[ '$GSTIN | grep vaapiencode_h264 >/dev/null'  ]]
 	     then ENCODER="$VAAPI "
 	     echo "Using vaapiencode_h264 encoder"
-	     REC="$GST -e   ximagesrc  use-damage=0 ! multiqueue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
+	     REC="$GST -e   ximagesrc display-name=:$DNUM use-damage=0 ! multiqueue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
              echo $REC
              exec $REC
              exit 0
@@ -81,7 +84,7 @@ while getopts ":h?sd:n:" opt; do
 	      then ENCODER="$OMX"
 	      FORMAT="NV12"
 	      echo "Using omxh264enc encoder"
-	      REC="$GST -e   ximagesrc  use-damage=0 ! multiqueue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
+	      REC="$GST -e   ximagesrc display-name=:$DNUM  use-damage=0 ! multiqueue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
               echo $REC
               exec $REC
               exit 0
@@ -91,7 +94,7 @@ while getopts ":h?sd:n:" opt; do
         ;;
         =x)
         ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency "
-        REC="$GST -e   ximagesrc  use-damage=0 ! multiqueue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
+        REC="$GST -e   ximagesrc display-name=:$DNUM  use-damage=0 ! multiqueue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
         echo $REC
         exec $REC
         exit 0
@@ -153,10 +156,10 @@ VID=`kdialog --menu "CHOOSE RECORD MODE:" A "FULL SCREEN REC" B "WINDOW REC";`
 
 if [ "$?" = 0 ]; then
 	if [ "$VID" = A ]; then
-		REC="$GST -e   ximagesrc  use-damage=0 ! multiqueue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
+		REC="$GST -e   ximagesrc display-name=:$DNUM  use-damage=0 ! multiqueue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
 	elif [ "$VID" = B ]; then
 	        XID=`xwininfo |grep 'Window id' | awk '{print $4;}'`
-		REC="$GST -e    ximagesrc  xid=$XID  use-damage=0 ! multiqueue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
+		REC="$GST -e    ximagesrc  xid=$XID  display-name=:$DNUM  use-damage=0 ! multiqueue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
 	else
 		echo "ERROR";
 	fi;
