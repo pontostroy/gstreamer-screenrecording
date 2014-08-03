@@ -48,7 +48,7 @@ echo "Run with -s argument to enable sound recording /rec.sh -s
 }
 
 
-while getopts ":h?sd:n:x:" opt; do
+while getopts ":h?sx:d:n:" opt; do
     case "$opt" in
     h|\?)
         show_help
@@ -62,6 +62,7 @@ while getopts ":h?sd:n:x:" opt; do
         ;;
     d)  DIRM="$OPTARG"
         FILEMANE="$DIRM/rec_$TIME.mkv"
+        FOUT=" ! progressreport name="Rec_time" ! filesink location=$FILEMANE"
         echo "Video saving to $DIRM"
         ;;
     n)  NOGUI=$OPTARG
@@ -71,7 +72,7 @@ while getopts ":h?sd:n:x:" opt; do
         if  [[ '$GSTIN | grep vaapiencode_h264 >/dev/null'  ]]
 	     then ENCODER="$VAAPI "
 	     echo "Using vaapiencode_h264 encoder"
-	     REC="$GST -e   ximagesrc display-name=:$DNUM use-damage=0 ! multiqueue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
+	     REC="$GST -e  ximagesrc display-name=:$DNUM use-damage=0 ! multiqueue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
              echo $REC
              exec $REC
              exit 0
@@ -84,7 +85,7 @@ while getopts ":h?sd:n:x:" opt; do
 	      then ENCODER="$OMX"
 	      FORMAT="NV12"
 	      echo "Using omxh264enc encoder"
-	      REC="$GST -e   ximagesrc display-name=:$DNUM  use-damage=0 ! multiqueue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
+	      REC="$GST -e  ximagesrc display-name=:$DNUM  use-damage=0 ! multiqueue ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
               echo $REC
               exec $REC
               exit 0
@@ -111,7 +112,9 @@ shift $((OPTIND-1))
 
 [ "$1" = "--" ] && shift
 
+if [ -z "$FILEMANE" ]; then
 FILEMANE="$DIRM/rec_$TIME.mkv"
+fi
 FOUT=" ! progressreport name="Rec_time" ! filesink location=$FILEMANE"
 
 function ENC {
