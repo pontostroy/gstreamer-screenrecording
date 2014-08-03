@@ -1,5 +1,6 @@
 gstreamer-screenrecording
 =========================
+![ScreenShot](http://www.gearsongallium.com/wp-content/uploads/2014/04/3.png)
 
 Patches and scripts for gstreamer
 
