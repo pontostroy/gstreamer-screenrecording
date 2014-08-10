@@ -31,7 +31,7 @@ NOGUI=""
 SINPUT=$(pacmd list | sed -n "s/.*<\(.*\\.monitor\)>/\\1/p" | head -1)
 ##SOUND
 #if [ $# -gt 0 ]; then
-SOUNDC=" pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! multiqueue ! lamemp3enc bitrate=192 cbr=true ! multiqueue ! muxer."
+SOUNDC=" pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! multiqueue ! vorbisenc quality=0.4 ! multiqueue ! muxer."
 #echo "Sound ON"
 #else
 SOUND=" "
