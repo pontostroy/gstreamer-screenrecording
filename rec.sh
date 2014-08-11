@@ -28,10 +28,10 @@ NOGUI=""
 ##pactl list | grep -A2 'Source #' | grep 'Name: ' | cut -d" " -f2
 ##alsa_output.pci-0000_00_1b.0.analog-stereo.monitor
 ##alsa_input.usb-Sonix_Technology_Co.__Ltd._Trust_Webcam-02-Webcam.analog-mono
-SINPUT="alsa_output.pci-0000_00_1b.0.analog-stereo.monitor"
+SINPUT=$(pacmd list | sed -n "s/.*<\(.*\\.monitor\)>/\\1/p" | head -1)
 ##SOUND
 #if [ $# -gt 0 ]; then
-SOUNDC=" pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! multiqueue ! lamemp3enc bitrate=192 cbr=true ! multiqueue ! muxer."
+SOUNDC=" pulsesrc device-name=$SINPUT ! audio/x-raw,channels=2 ! multiqueue ! vorbisenc quality=0.4 ! multiqueue ! muxer."
 #echo "Sound ON"
 #else
 SOUND=" "
