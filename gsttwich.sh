@@ -27,7 +27,7 @@ SENC="! voaacenc bitrate=128000 ! aacparse"
 ##pactl list | grep -A2 'Source #' | grep 'Name: ' | cut -d" " -f2
 ##alsa_output.pci-0000_00_1b.0.analog-stereo.monitor
 ##alsa_input.usb-Sonix_Technology_Co.__Ltd._Trust_Webcam-02-Webcam.analog-mono
-SINPUT="alsa_output.pci-0000_00_1b.0.analog-stereo.monitor"
+SINPUT=$(pacmd list | sed -n "s/.*<\(.*\\.monitor\)>/\\1/p" | head -1)
 
 # Find stream key
 if [ -f ~/.twitch.key ]; then
@@ -69,7 +69,7 @@ while getopts "h?n:x:" opt; do
         if  [[ '$GSTIN | grep vaapiencode_h264 >/dev/null'  ]]
 	     then ENCODER="$VAAPI "
 	     echo "Using vaapiencode_h264 encoder"
-	     REC="$GST -e  ximagesrc  display-name=:$DNUM  use-damage=0 ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream  $ENCODER ! multiqueue ! $FOUT pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! multiqueue  $SENC ! multiqueue ! muxer. muxer. ! progressreport name="Rec_time" ! rtmpsink location=$URL$TKEY" 
+	     REC="$GST -e  ximagesrc  display-name=:$DNUM  use-damage=0 ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream  $ENCODER ! multiqueue ! $FOUT pulsesrc device-name=$SINPUT ! audio/x-raw,channels=2 ! multiqueue  $SENC ! multiqueue ! muxer. muxer. ! progressreport name="Rec_time" ! rtmpsink location=$URL$TKEY" 
              #echo $REC
              exec $REC
              exit 0
@@ -88,7 +88,7 @@ while getopts "h?n:x:" opt; do
 	      then ENCODER="$OMX"
 	      FORMAT="NV12"
 	      echo "Using omxh264enc encoder"
-	      REC="$GST -e  ximagesrc display-name=:$DNUM  use-damage=0 ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream  $ENCODER ! multiqueue ! $FOUT pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! multiqueue  $SENC ! multiqueue ! muxer. muxer. ! progressreport name="Rec_time" ! rtmpsink location=$URL$TKEY" 
+	      REC="$GST -e  ximagesrc display-name=:$DNUM  use-damage=0 ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream  $ENCODER ! multiqueue ! $FOUT pulsesrc device-name=$SINPUT ! audio/x-raw,channels=2 ! multiqueue  $SENC ! multiqueue ! muxer. muxer. ! progressreport name="Rec_time" ! rtmpsink location=$URL$TKEY" 
               #echo $REC
               exec $REC
               exit 0
@@ -98,7 +98,7 @@ while getopts "h?n:x:" opt; do
         ;;
         =x)
         ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency "
-        REC="$GST -e  ximagesrc  use-damage=0 ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream  $ENCODER ! multiqueue ! $FOUT pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! multiqueue  $SENC ! multiqueue ! muxer. muxer. ! progressreport name="Rec_time" ! rtmpsink location=$URL$TKEY"
+        REC="$GST -e  ximagesrc  use-damage=0 ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream  $ENCODER ! multiqueue ! $FOUT pulsesrc device-name=$SINPUT ! audio/x-raw,channels=2 ! multiqueue  $SENC ! multiqueue ! muxer. muxer. ! progressreport name="Rec_time" ! rtmpsink location=$URL$TKEY"
         #echo $REC
         exec $REC
         exit 0
@@ -159,10 +159,10 @@ VID=`kdialog --menu "CHOOSE RECORD MODE:" A "FULL SCREEN REC" B "WINDOW REC";`
 
 if [ "$?" = 0 ]; then
 	if [ "$VID" = A ]; then
-		REC="$GST -e  ximagesrc display-name=:$DNUM  use-damage=0 ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream  $ENCODER ! multiqueue ! $FOUT pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! multiqueue  $SENC ! multiqueue ! muxer. muxer. ! progressreport name="Rec_time" ! rtmpsink location=$URL$TKEY" 
+		REC="$GST -e  ximagesrc display-name=:$DNUM  use-damage=0 ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream  $ENCODER ! multiqueue ! $FOUT pulsesrc device-name=$SINPUT ! audio/x-raw,channels=2 ! multiqueue  $SENC ! multiqueue ! muxer. muxer. ! progressreport name="Rec_time" ! rtmpsink location=$URL$TKEY" 
 	elif [ "$VID" = B ]; then
 	        XID=`xwininfo |grep 'Window id' | awk '{print $4;}'`
-		REC="$GST -e  ximagesrc display-name=:$DNUM xid=$XID  use-damage=0 ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream  $ENCODER ! multiqueue ! $FOUT pulsesrc device=$SINPUT ! audio/x-raw,channels=2 ! multiqueue  $SENC ! multiqueue ! muxer. muxer. ! progressreport name="Rec_time" ! rtmpsink location=$URL$TKEY" 
+		REC="$GST -e  ximagesrc display-name=:$DNUM xid=$XID  use-damage=0 ! video/x-raw,format=BGRx ! videoconvert ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! queue leaky=downstream  $ENCODER ! multiqueue ! $FOUT pulsesrc device-name=$SINPUT ! audio/x-raw,channels=2 ! multiqueue  $SENC ! multiqueue ! muxer. muxer. ! progressreport name="Rec_time" ! rtmpsink location=$URL$TKEY" 
 	else
 		echo "ERROR";
 	fi;
