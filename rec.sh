@@ -67,6 +67,10 @@ while getopts ":h?sx:d:n:" opt; do
         ;;
     n)  NOGUI=$OPTARG
         echo "Nogui mode"
+        if [ -z "$FILEMANE" ]; then
+	FILEMANE="$DIRM/rec_$TIME.mkv"
+	fi
+	FOUT=" ! progressreport name="Rec_time" ! filesink location=$FILEMANE"
         case "$NOGUI" in 
         =v)
         if  [[ '$GSTIN | grep vaapiencode_h264 >/dev/null'  ]]
