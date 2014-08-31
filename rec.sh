@@ -22,7 +22,7 @@ ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency "
 ##OMX
 OMX="! omxh264enc ! h264parse "
 ##VAAPI
-VAAPI="! vaapiencode_h264  ! vaapiparse_h264 "
+VAAPI="! vaapiencode_h264  dct8x8=true ! vaapiparse_h264 "
 NOGUI=""
 #SOUND SOURCE
 ##pactl list | grep -A2 'Source #' | grep 'Name: ' | cut -d" " -f2

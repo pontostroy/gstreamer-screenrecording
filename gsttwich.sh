@@ -16,11 +16,11 @@ REC=""
 #FORMAT I420 or NV12
 FORMAT="I420"
 ##Software
-ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency"
+ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency  ! video/x-h264,stream-format=byte-stream,profile=main ! h264parse "
 ##OMX
-OMX="! omxh264enc   !  video/x-h264,stream-format=byte-stream,profile=high ! h264parse  "
+OMX="! omxh264enc ! video/x-h264,stream-format=byte-stream,profile=main ! h264parse  "
 ##VAAPI
-VAAPI="! vaapiencode_h264 !  video/x-h264,stream-format=byte-stream,profile=high ! vaapiparse_h264 config-interval=2 "
+VAAPI="! vaapiencode_h264 dct8x8=true !  video/x-h264,stream-format=byte-stream,profile=high ! vaapiparse_h264 config-interval=2 "
 SENC="! voaacenc bitrate=128000 ! aacparse"
 
 #SOUND SOURCE 
