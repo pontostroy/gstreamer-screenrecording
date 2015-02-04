@@ -76,7 +76,7 @@ while getopts ":h?sx:d:n:" opt; do
         =v)
         if  [[ '$GSTIN | grep vaapiencode_h264 >/dev/null'  ]]
 	     then ENCODER="$VAAPI "
-	     VIDEOCONV="vaapipostproc format=i420"
+	     VIDEOCONV="! vaapipostproc format=i420"
 	     echo "Using vaapiencode_h264 encoder"
 	     REC="$GST -e  ximagesrc display-name=:$DNUM use-damage=0 ! multiqueue ! video/x-raw,format=BGRx  $VIDEOCONV  ! video/x-raw,format=$FORMAT,framerate=$FPSIN  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
              echo $REC
