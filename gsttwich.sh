@@ -9,7 +9,7 @@ BELAGIOBIN="/usr/bin/omxregister-bellagio"
 GST="gst-launch-1.0"
 GSTIN="gst-inspect-1.0"
 ##FPS 
-FPSIN="25/1"
+FPS="25/1"
 URL="rtmp://live.justin.tv/app/"
 FOUT=" flvmux  streamable=true name="muxer" "
 REC=""
@@ -71,7 +71,7 @@ while getopts "h?n:x:" opt; do
 	     then ENCODER="$VAAPI "
 	     VIDEOCONV="! vaapipostproc format=i420"
 	     echo "Using vaapiencode_h264 encoder"
-	     REC="$GST -e  ximagesrc  display-name=:$DNUM  use-damage=0 ! video/x-raw,format=BGRx $VIDEOCONV ! video/x-raw,format=$FORMAT,framerate=$FPSIN  $ENCODER ! multiqueue ! $FOUT pulsesrc device-name=$SINPUT ! audio/x-raw,channels=2 ! multiqueue  $SENC ! multiqueue ! muxer. muxer. ! progressreport name="Rec_time" ! queue leaky=downstream ! rtmpsink location=$URL$TKEY" 
+	     REC="$GST -e  ximagesrc  display-name=:$DNUM  use-damage=0 ! video/x-raw,format=BGRx,framerate=$FPS $VIDEOCONV ! video/x-raw,format=$FORMAT,framerate=$FPS  $ENCODER ! multiqueue ! $FOUT pulsesrc device-name=$SINPUT ! audio/x-raw,channels=2 ! multiqueue  $SENC ! multiqueue ! muxer. muxer. ! progressreport name="Rec_time" ! queue leaky=downstream ! rtmpsink location=$URL$TKEY" 
              #echo $REC
              exec $REC
              exit 0
@@ -90,7 +90,7 @@ while getopts "h?n:x:" opt; do
 	      then ENCODER="$OMX"
 	      FORMAT="NV12"
 	      echo "Using omxh264enc encoder"
-	      REC="$GST -e  ximagesrc display-name=:$DNUM  use-damage=0 ! video/x-raw,format=BGRx $VIDEOCONV ! video/x-raw,format=$FORMAT,framerate=$FPSIN  $ENCODER ! multiqueue ! $FOUT pulsesrc device-name=$SINPUT ! audio/x-raw,channels=2 ! multiqueue  $SENC ! multiqueue ! muxer. muxer. ! progressreport name="Rec_time"  ! queue leaky=downstream ! rtmpsink location=$URL$TKEY" 
+	      REC="$GST -e  ximagesrc display-name=:$DNUM  use-damage=0 ! video/x-raw,format=BGRx,framerate=$FPS $VIDEOCONV ! video/x-raw,format=$FORMAT,framerate=$FPS  $ENCODER ! multiqueue ! $FOUT pulsesrc device-name=$SINPUT ! audio/x-raw,channels=2 ! multiqueue  $SENC ! multiqueue ! muxer. muxer. ! progressreport name="Rec_time"  ! queue leaky=downstream ! rtmpsink location=$URL$TKEY" 
               #echo $REC
               exec $REC
               exit 0
@@ -100,7 +100,7 @@ while getopts "h?n:x:" opt; do
         ;;
         =x)
         ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency "
-        REC="$GST -e  ximagesrc  use-damage=0 ! video/x-raw,format=BGRx $VIDEOCONV ! video/x-raw,format=$FORMAT,framerate=$FPSIN  $ENCODER ! multiqueue ! $FOUT pulsesrc device-name=$SINPUT ! audio/x-raw,channels=2 ! multiqueue  $SENC ! multiqueue ! muxer. muxer. ! progressreport name="Rec_time" ! queue leaky=downstream ! rtmpsink location=$URL$TKEY"
+        REC="$GST -e  ximagesrc  use-damage=0 ! video/x-raw,format=BGRx,framerate=$FPS $VIDEOCONV ! video/x-raw,format=$FORMAT,framerate=$FPS $ENCODER ! multiqueue ! $FOUT pulsesrc device-name=$SINPUT ! audio/x-raw,channels=2 ! multiqueue  $SENC ! multiqueue ! muxer. muxer. ! progressreport name="Rec_time" ! queue leaky=downstream ! rtmpsink location=$URL$TKEY"
         #echo $REC
         exec $REC
         exit 0
