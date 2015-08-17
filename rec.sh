@@ -100,7 +100,7 @@ while getopts ":h?sx:d:n:" opt; do
         ;;
         =x)
         ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency "
-        REC="$GST -e   ximagesrc display-name=:$DNUM  use-damage=0 ! multiqueue ! video/x-raw,format=BGRx  $VIDEOCONV ! video/x-raw,format=$FORMAT,framerate=$FPS  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
+        REC="$GST -e   ximagesrc display-name=:$DNUM  use-damage=0 ! multiqueue ! video/x-raw,format=BGRx,framerate=$FPS  $VIDEOCONV ! video/x-raw,format=$FORMAT,framerate=$FPS  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
         echo $REC
         exec $REC
         exit 0
