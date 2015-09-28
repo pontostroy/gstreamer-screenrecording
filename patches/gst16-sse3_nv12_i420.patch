@@ -1,0 +1,249 @@
+--- ./gst-libs/gst/video/video-converter.c	2015-09-16 20:13:11.460755892 +0300
++++ ./gst-libs/gst/video/video-converter.c	2015-09-28 19:09:45.713436593 +0300
+@@ -27,6 +27,14 @@
+ #include <glib.h>
+ #include <string.h>
+ #include <math.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <stdint.h>
++
++#include <xmmintrin.h>
++#include <emmintrin.h>
++#include <pmmintrin.h>
++#include <tmmintrin.h>
+ 
+ #include "video-orc.h"
+ 
+@@ -924,31 +932,31 @@
+   color_matrix_copy (dst, &m);
+ }
+ 
+-static void
+-videoconvert_convert_init_tables (MatrixData * data)
+-{
+-  gint i, j;
+-
+-  data->t_r = g_new (gint64, 256);
+-  data->t_g = g_new (gint64, 256);
+-  data->t_b = g_new (gint64, 256);
+-
+-  for (i = 0; i < 256; i++) {
+-    gint64 r = 0, g = 0, b = 0;
+-
+-    for (j = 0; j < 3; j++) {
+-      r = (r << 16) + data->im[j][0] * i;
+-      g = (g << 16) + data->im[j][1] * i;
+-      b = (b << 16) + data->im[j][2] * i;
+-    }
+-    data->t_r[i] = r;
+-    data->t_g[i] = g;
+-    data->t_b[i] = b;
+-  }
+-  data->t_c = ((gint64) data->im[0][3] << 32)
+-      + ((gint64) data->im[1][3] << 16)
+-      + ((gint64) data->im[2][3] << 0);
+-}
++// static void
++// videoconvert_convert_init_tables (MatrixData * data)
++// {
++//   gint i, j;
++// 
++//   data->t_r = g_new (gint64, 256);
++//   data->t_g = g_new (gint64, 256);
++//   data->t_b = g_new (gint64, 256);
++// 
++//   for (i = 0; i < 256; i++) {
++//     gint64 r = 0, g = 0, b = 0;
++// 
++//     for (j = 0; j < 3; j++) {
++//       r = (r << 16) + data->im[j][0] * i;
++//       g = (g << 16) + data->im[j][1] * i;
++//       b = (b << 16) + data->im[j][2] * i;
++//     }
++//     data->t_r[i] = r;
++//     data->t_g[i] = g;
++//     data->t_b[i] = b;
++//   }
++//   data->t_c = ((gint64) data->im[0][3] << 32)
++//       + ((gint64) data->im[1][3] << 16)
++//       + ((gint64) data->im[2][3] << 0);
++// }
+ 
+ void
+ _custom_video_orc_matrix8 (guint8 * ORC_RESTRICT d1,
+@@ -997,27 +1005,141 @@
+       data->orc_p3, data->orc_p4, data->width);
+ }
+ 
+-static void
+-video_converter_matrix8_table (MatrixData * data, gpointer pixels)
+-{
+-  gint i, width = data->width * 4;
+-  guint8 r, g, b;
+-  gint64 c = data->t_c;
+-  guint8 *p = pixels;
+-  gint64 x;
+-
+-  for (i = 0; i < width; i += 4) {
+-    r = p[i + 1];
+-    g = p[i + 2];
+-    b = p[i + 3];
+-
+-    x = data->t_r[r] + data->t_g[g] + data->t_b[b] + c;
+-
+-    p[i + 1] = x >> (32 + SCALE);
+-    p[i + 2] = x >> (16 + SCALE);
+-    p[i + 3] = x >> (0 + SCALE);
+-  }
++// static void
++// video_converter_matrix8_table (MatrixData * data, gpointer pixels)
++// {
++//   gint i, width = data->width * 4;
++//   guint8 r, g, b;
++//   gint64 c = data->t_c;
++//   guint8 *p = pixels;
++//   gint64 x;
++// 
++//   for (i = 0; i < width; i += 4) {
++//     r = p[i + 1];
++//     g = p[i + 2];
++//     b = p[i + 3];
++// 
++//     x = data->t_r[r] + data->t_g[g] + data->t_b[b] + c;
++// 
++//     p[i + 1] = x >> (32 + SCALE);
++//     p[i + 2] = x >> (16 + SCALE);
++//     p[i + 3] = x >> (0 + SCALE);
++//   }
++// }
++
++
++typedef struct {
++  __m128i r, g, b;
++} r8g8b8_t;
++
++
++typedef struct {
++  __m128i y, u, v;
++} y8u8v8_t;
++
++
++typedef struct {
++  __m128i r_coef, g_coef, b_coef, x_coef;
++} rgb_to_yuv_mat_v8_t;
++
++
++
++static inline rgb_to_yuv_mat_v8_t create_vecm(int32_t r_coef, int32_t g_coef, int32_t b_coef, int32_t x_coef) {
++  return (rgb_to_yuv_mat_v8_t) {
++    _mm_set1_epi16(r_coef),
++    _mm_set1_epi16(g_coef),
++    _mm_set1_epi16(b_coef),
++    _mm_set1_epi16(x_coef)
++  };
++}
++
++static inline __m128i op(r8g8b8_t v, rgb_to_yuv_mat_v8_t m) {
++  __m128i a = _mm_mullo_epi16(v.r, m.r_coef);
++  __m128i b = _mm_mullo_epi16(v.g, m.g_coef);
++  __m128i c = _mm_mullo_epi16(v.b, m.b_coef);
++  __m128i ret = _mm_add_epi16(_mm_add_epi16(a, b), _mm_add_epi16(c, m.x_coef));
++  return _mm_srai_epi16(ret, 8);
++}
++
++static inline __m128i r8g8b8_to_y8(r8g8b8_t v) {
++  return op(v, create_vecm(47, 157, 16, 4096));
++}
++static inline __m128i r8g8b8_to_u8(r8g8b8_t v) {
++  return op(v, create_vecm(-26, -87, 112, 32768));
++}
++static inline __m128i r8g8b8_to_v8(r8g8b8_t v) {
++  return op(v, create_vecm(112, -102, -10, 32768));
+ }
++static inline y8u8v8_t r8g8b8_to_y8u8v8(r8g8b8_t v) {
++  return (y8u8v8_t) {r8g8b8_to_y8(v), r8g8b8_to_u8(v), r8g8b8_to_v8(v)};
++}
++
++
++static inline r8g8b8_t p16x2_to_r8g8b8(__m128i a, __m128i b) {
++  __m128i shuff_ra  = _mm_setr_epi8(1, 255, 255, 255, 5, 255, 255, 255, 9, 255, 255, 255, 13, 255, 255, 255);
++  __m128i shuff_ga  = _mm_setr_epi8(2, 255, 255, 255, 6, 255, 255, 255, 10, 255, 255, 255, 14, 255, 255, 255);
++  __m128i shuff_ba  = _mm_setr_epi8(3, 255, 255, 255, 7, 255, 255, 255, 11, 255, 255, 255, 15, 255, 255, 255);
++  __m128i shuff_rb  = _mm_setr_epi8(255, 255, 1, 255, 255, 255, 5, 255, 255, 255, 9, 255, 255, 255, 13, 255);
++  __m128i shuff_gb  = _mm_setr_epi8(255, 255, 2, 255, 255, 255, 6, 255, 255, 255, 10, 255, 255, 255, 14, 255);
++  __m128i shuff_bb  = _mm_setr_epi8(255, 255, 3, 255, 255, 255, 7, 255, 255, 255, 11, 255, 255, 255, 15, 255);
++  __m128i r8 = _mm_or_si128(_mm_shuffle_epi8(a, shuff_ra), _mm_shuffle_epi8(b, shuff_rb));
++  __m128i g8 = _mm_or_si128(_mm_shuffle_epi8(a, shuff_ga), _mm_shuffle_epi8(b, shuff_gb));
++  __m128i b8 = _mm_or_si128(_mm_shuffle_epi8(a, shuff_ba), _mm_shuffle_epi8(b, shuff_bb));
++  return (r8g8b8_t) {r8, g8, b8};
++}
++
++static inline __m128i y8u8v8_to_p16a(y8u8v8_t v) {
++  __m128i shuff_ya  = _mm_setr_epi8(255, 0, 255, 255, 255, 4, 255, 255, 255, 8, 255, 255, 255, 12, 255, 255);
++  __m128i shuff_ua  = _mm_setr_epi8(255, 255, 0, 255, 255, 255, 4, 255, 255, 255, 8, 255, 255, 255, 12, 255);
++  __m128i shuff_va  = _mm_setr_epi8(255, 255, 255, 0, 255, 255, 255, 4, 255, 255, 255, 8, 255, 255, 255, 12);
++  return _mm_or_si128(_mm_or_si128(_mm_shuffle_epi8(v.y, shuff_ya), _mm_shuffle_epi8(v.u, shuff_ua)), _mm_shuffle_epi8(v.v, shuff_va));
++}
++
++static inline __m128i y8u8v8_to_p16b(y8u8v8_t v) {
++  __m128i shuff_yb  = _mm_setr_epi8(255, 2, 255, 255, 255, 6, 255, 255, 255, 10, 255, 255, 255, 14, 255, 255);
++  __m128i shuff_ub  = _mm_setr_epi8(255, 255, 2, 255, 255, 255, 6, 255, 255, 255, 10, 255, 255, 255, 14, 255);
++  __m128i shuff_vb  = _mm_setr_epi8(255, 255, 255, 2, 255, 255, 255, 6, 255, 255, 255, 10, 255, 255, 255, 14);
++  return _mm_or_si128(_mm_or_si128(_mm_shuffle_epi8(v.y, shuff_yb), _mm_shuffle_epi8(v.u, shuff_ub)), _mm_shuffle_epi8(v.v, shuff_vb));
++}
++
++static void
++video_converter_matrix8_sse3 (MatrixData * data, gpointer p) {
++  guint8 *pixels = p;
++  __m128i * it = pixels, * end = (__m128i *)((int32_t *)pixels + data->width);
++  do {
++    {
++    __m128i a = *(it + 0), b = *(it + 1);
++    y8u8v8_t v = r8g8b8_to_y8u8v8(p16x2_to_r8g8b8(a, b));
++    a = y8u8v8_to_p16a(v), b = y8u8v8_to_p16b(v);
++    *(it + 0) = a, *(it + 1) = b;
++    it += 2;
++    }    
++    {
++    __m128i a = *(it + 0), b = *(it + 1);
++    y8u8v8_t v = r8g8b8_to_y8u8v8(p16x2_to_r8g8b8(a, b));
++    a = y8u8v8_to_p16a(v), b = y8u8v8_to_p16b(v);
++    *(it + 0) = a, *(it + 1) = b;
++    it += 2;
++    }
++    {
++    __m128i a = *(it + 0), b = *(it + 1);
++    y8u8v8_t v = r8g8b8_to_y8u8v8(p16x2_to_r8g8b8(a, b));
++    a = y8u8v8_to_p16a(v), b = y8u8v8_to_p16b(v);
++    *(it + 0) = a, *(it + 1) = b;
++    it += 2;
++    }
++    {
++    __m128i a = *(it + 0), b = *(it + 1);
++    y8u8v8_t v = r8g8b8_to_y8u8v8(p16x2_to_r8g8b8(a, b));
++    a = y8u8v8_to_p16a(v), b = y8u8v8_to_p16b(v);
++    *(it + 0) = a, *(it + 1) = b;
++    it += 2;
++    }
++  } while(it < end);
++ }
++
++
++
+ 
+ static void
+ video_converter_matrix8_AYUV_ARGB (MatrixData * data, gpointer pixels)
+@@ -1149,9 +1271,9 @@
+       GST_DEBUG ("use fast AYUV -> RGB matrix");
+       data->matrix_func = video_converter_matrix8_AYUV_ARGB;
+     } else if (is_no_clip_matrix (data)) {
+-      GST_DEBUG ("use 8bit table");
+-      data->matrix_func = video_converter_matrix8_table;
+-      videoconvert_convert_init_tables (data);
++      GST_DEBUG ("use SEE");
++      data->matrix_func = video_converter_matrix8_sse3;
++      //videoconvert_convert_init_tables (data);
+     } else {
+       gint a03, a13, a23;
+ 
