@@ -196,7 +196,7 @@
 +static void
 +video_converter_matrix8_sse3 (MatrixData * data, gpointer p) {
 +  guint8 *pixels = p;
-+  __m128i * it = pixels, * end = (__m128i *)((int32_t *)pixels + data->width);
++  __m128i * it = (__m128i *)((int32_t *) pixels), * end = (__m128i *)((int32_t *)pixels + data->width);
 +  do {
 +    {
 +    __m128i a = *(it + 0), b = *(it + 1);
