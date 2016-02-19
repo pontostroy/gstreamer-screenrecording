@@ -133,7 +133,13 @@ fi
 FOUT=" ! progressreport name="Rec_time" ! filesink location=$FILEMANE"
 
 function ENC {
-DI=`kdialog --menu "CHOOSE ENCODER:" 1 "Radeon OMX" 2 "Intel VAAPI" 3 "SOFTWARE";`
+#DI=`kdialog --menu "CHOOSE ENCODER:" 1 "Radeon OMX" 2 "Intel VAAPI" 3 "SOFTWARE";`
+DI=`zenity --list --title="CHOOSE ENCODER" \
+       --text="CHOOSE ENCODER:" \
+       --column="#" --column="Encoder" --column="" \
+       1 Amd "omx(vce) encoder" \
+       2 Intel "vaapi encoder" \
+       3 Software "Software x264 edcoder" `
 
 if [ "$?" = 0 ]; then
 case "$DI" in 
@@ -171,14 +177,23 @@ fi
 
 
 function DIAL {
-VID=`kdialog --menu "CHOOSE RECORD MODE:" A "FULL SCREEN REC" B "WINDOW REC";`
+#VID=`kdialog --menu "CHOOSE RECORD MODE:" A "FULL SCREEN REC" B "WINDOW REC";`
+VID=`zenity --list --title="CHOOSE RECORD MODE" \
+       --text="Mode:" \
+       --column="#" --column=""\
+       Fullscreen "Fullscreen recording" \
+       Window "Windows recording"`
 
 if [ "$?" = 0 ]; then
-	if [ "$VID" = A ]; then
+	if [ "$VID" = Fullscreen ]; then
 		REC="$GST -e   ximagesrc display-name=:$DNUM  use-damage=0 startx=0 starty=0 endx=$M_H endy=$M_W ! multiqueue ! video/x-raw,format=BGRx,framerate=$FPS  $VIDEOCONV ! video/x-raw,format=$FORMAT,framerate=$FPS  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
-	elif [ "$VID" = B ]; then
+	elif [ "$VID" = Window ]; then
+	        if which xwininfo >/dev/null; then
 	        XID=`xwininfo |grep 'Window id' | awk '{print $4;}'`
 		REC="$GST -e    ximagesrc  xid=$XID  display-name=:$DNUM  use-damage=0 ! multiqueue ! video/x-raw,format=BGRx,framerate=$FPS  $VIDEOCONV ! video/x-raw,format=$FORMAT,framerate=$FPS  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
+		else
+		echo "install xwininfo";
+		fi
 	else
 		echo "ERROR";
 	fi;

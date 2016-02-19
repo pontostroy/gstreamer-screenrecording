@@ -7,7 +7,7 @@ Patches and scripts for gstreamer
 Scripts
 ```
 rec.sh - Record screen or window  with VAAPI(intel I420 or NV12), OMX(radeon NV12), software (x264enc I420 or NV12) to mkv file, with or without sound.
-Require kdialog, gstreamer-1.0, gst-omx, gstreamer-vaapi-plugin, intel-vaapi or mesa-omx, pulseaudio.
+Require zenity, gstreamer-1.0, gst-omx, gstreamer-vaapi-plugin, intel-vaapi or mesa-omx, pulseaudio.
 
 Run with -s argument to enable sound recording /rec.sh -s
          -d to set dir for saving *.mkv /rec.sh -d /tmp
@@ -26,7 +26,7 @@ Run with
          -h show help message"
 
 
-Require kdialog, gstreamer-1.0, gst-omx, gstreamer-vaapi-plugin, intel-vaapi or mesa-omx, pulseaudio.
+Require zenity, gstreamer-1.0, gst-omx, gstreamer-vaapi-plugin, intel-vaapi or mesa-omx, pulseaudio.
 ```
 
 
