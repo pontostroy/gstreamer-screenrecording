@@ -8,6 +8,12 @@ DNUM=0
 BELAGIOBIN="/usr/bin/omxregister-bellagio"
 GST="gst-launch-1.0"
 GSTIN="gst-inspect-1.0"
+VAENC="vaapiencode_h264"
+if [[ "$GSTIN | grep vaapih264enc >/dev/null"  ]]
+then VAENC="vaapih264enc"
+else
+VAENC="vaapiencode_h264"
+fi
 ##FPS 
 FPS="25/1"
 MONITOR_H=$(xrandr | grep '*'|head -1| awk '{print $1}'  | awk -Fx '{print $1}')
@@ -25,7 +31,7 @@ ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency  ! video/x-h2
 ##OMX
 OMX="! omxh264enc ! video/x-h264,stream-format=byte-stream,profile=main ! h264parse  "
 ##VAAPI
-VAAPI="! vaapiencode_h264 dct8x8=true !  video/x-h264,stream-format=byte-stream,profile=high ! vaapiparse_h264 config-interval=2 "
+VAAPI="! $VAENC  dct8x8=true !  video/x-h264,stream-format=byte-stream,profile=high ! vaapiparse_h264 config-interval=2 "
 SENC="! voaacenc bitrate=128000 ! aacparse"
 
 #SOUND SOURCE 
@@ -71,15 +77,15 @@ while getopts "h?n:x:" opt; do
         echo "Nogui mode"
         case "$NOGUI" in 
         =v)
-        if  [[ '$GSTIN | grep vaapiencode_h264 >/dev/null'  ]]
+        if  [[ "$GSTIN | grep $VAENC >/dev/null"  ]]
 	     then ENCODER="$VAAPI "
 	     VIDEOCONV="! vaapipostproc format=i420"
-	     echo "Using vaapiencode_h264 encoder"
+	     echo "Using $VAENC encoder"
 	     REC="$GST -e  ximagesrc  display-name=:$DNUM  use-damage=0 startx=0 starty=0 endx=$M_H endy=$M_W ! video/x-raw,format=BGRx,framerate=$FPS $VIDEOCONV ! video/x-raw,format=$FORMAT,framerate=$FPS  $ENCODER ! multiqueue ! $FOUT pulsesrc device-name=$SINPUT ! audio/x-raw,channels=2 ! multiqueue  $SENC ! multiqueue ! muxer. muxer. ! progressreport name="Rec_time" ! queue leaky=downstream ! rtmpsink location=$URL$TKEY" 
              #echo $REC
-             exec $REC
+             eval $REC
              exit 0
-	     else echo "Gstreamer vaapiencode_h264 not found"
+	     else echo "Gstreamer $VAENC not found"
 	     exit 0
 	 fi
 	 ;;
@@ -96,7 +102,7 @@ while getopts "h?n:x:" opt; do
 	      echo "Using omxh264enc encoder"
 	      REC="$GST -e  ximagesrc display-name=:$DNUM  use-damage=0 startx=0 starty=0 endx=$M_H endy=$M_W ! video/x-raw,format=BGRx,framerate=$FPS $VIDEOCONV ! video/x-raw,format=$FORMAT,framerate=$FPS  $ENCODER ! multiqueue ! $FOUT pulsesrc device-name=$SINPUT ! audio/x-raw,channels=2 ! multiqueue  $SENC ! multiqueue ! muxer. muxer. ! progressreport name="Rec_time"  ! queue leaky=downstream ! rtmpsink location=$URL$TKEY" 
               #echo $REC
-              exec $REC
+              eval $REC
               exit 0
 	      else echo "Gstreamer omxh264enc not found"
 	      exit 0
@@ -106,7 +112,7 @@ while getopts "h?n:x:" opt; do
         ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency "
         REC="$GST -e  ximagesrc  use-damage=0 startx=0 starty=0 endx=$M_H endy=$M_W ! video/x-raw,format=BGRx,framerate=$FPS $VIDEOCONV ! video/x-raw,format=$FORMAT,framerate=$FPS $ENCODER ! multiqueue ! $FOUT pulsesrc device-name=$SINPUT ! audio/x-raw,channels=2 ! multiqueue  $SENC ! multiqueue ! muxer. muxer. ! progressreport name="Rec_time" ! queue leaky=downstream ! rtmpsink location=$URL$TKEY"
         #echo $REC
-        exec $REC
+        eval $REC
         exit 0
         ;;
         *)
@@ -142,11 +148,11 @@ case "$DI" in
 	      else echo "Gstreamer omxh264enc not found"
 	   fi;;
        2)
-	   if  [[ '$GSTIN | grep vaapiencode_h264 >/dev/null'  ]]
+	   if  [[ "$GSTIN | grep $VAENC >/dev/null"  ]]
 	     then ENCODER="$VAAPI "
 	     VIDEOCONV="! vaapipostproc format=i420"
-	     echo "Using vaapiencode_h264 encoder"
-	     else echo "Gstreamer vaapiencode_h264 not found"
+	     echo "Using $VAENC encoder"
+	     else echo "Gstreamer $VAENC not found"
 	   fi;;
 	3)
 	     ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency"
@@ -180,4 +186,4 @@ fi;
 ENC
 DIAL
 echo $REC
-exec $REC
+eval $REC
