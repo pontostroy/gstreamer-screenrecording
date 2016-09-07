@@ -27,9 +27,9 @@ REC=""
 #FORMAT I420 or NV12
 FORMAT="I420"
 ##Software
-ENCODER="! x264enc  speed-preset=faster qp-min=30 tune=zerolatency "
+ENCODER="! x264enc speed-preset=faster qp-min=30 tune=zerolatency "
 ##OMX
-OMX="! omxh264enc ! h264parse "
+OMX="! omxh264enc control-rate=2 target-bitrate=9000000 ! h264parse "
 ##VAAPI
 VAAPI="! $VAENC  dct8x8=true ! h264parse "
 VIDEOCONV="! videoconvert "
@@ -51,7 +51,7 @@ SOUND=" "
 function show_help {
 echo "Run with -s argument to enable sound recording /rec.sh -s
          -d to set dir for saving *.mkv /rec.sh -d /tmp
-         -n for nogui mode /rec.sh -n=v for vaapi; -n=o for omx; -n=x for x264enc
+         -n for nogui mode /rec.sh -n=v for vaapi; -n=o for omx; -n=x for x264enc; -n=g for radeon vaapi
          -x nubmer of x-server  /rec.sh -x 0
          /rec.sh -s -d /tmp -n=o record screen with sound using omx and save to /tmp
          -h show help message"
@@ -86,6 +86,20 @@ while getopts ":h?sx:d:n:" opt; do
         if  [[ "$GSTIN | grep $VAENC >/dev/null"  ]]
 	     then ENCODER="$VAAPI "
 	     VIDEOCONV="! vaapipostproc format=i420"
+	     echo "Using $VAENC encoder"
+	     REC="$GST -e  ximagesrc display-name=:$DNUM use-damage=0 startx=0 starty=0 endx=$M_H endy=$M_W  ! multiqueue ! video/x-raw,format=BGRx,framerate=$FPS  $VIDEOCONV  ! video/x-raw,format=$FORMAT,framerate=$FPS  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
+             echo $REC
+             eval $REC
+             exit 0
+	     else echo "Gstreamer $VAENC not found"
+	     exit 0
+	 fi
+	 ;;
+        =g)
+        if  [[ "$GSTIN | grep $VAENC >/dev/null"  ]]
+	     then ENCODER="! $VAENC rate-control=2 bitrate=90000 ! h264parse "
+	     FORMAT="NV12"
+	     VIDEOCONV="! videoconvert"
 	     echo "Using $VAENC encoder"
 	     REC="$GST -e  ximagesrc display-name=:$DNUM use-damage=0 startx=0 starty=0 endx=$M_H endy=$M_W  ! multiqueue ! video/x-raw,format=BGRx,framerate=$FPS  $VIDEOCONV  ! video/x-raw,format=$FORMAT,framerate=$FPS  ! multiqueue   $ENCODER ! multiqueue ! $MUX  $SOUND  muxer. $FOUT"
              echo $REC
@@ -133,13 +147,14 @@ fi
 FOUT=" ! progressreport name="Rec_time" ! filesink location=$FILEMANE"
 
 function ENC {
-#DI=`kdialog --menu "CHOOSE ENCODER:" 1 "Radeon OMX" 2 "Intel VAAPI" 3 "SOFTWARE";`
+#DI=`kdialog --menu "CHOOSE ENCODER:" 1 "Radeon OMX" 2 "Radaon Vaapi" 3 "Intel VAAPI" 4 "SOFTWARE";`
 DI=`zenity --list --title="CHOOSE ENCODER" \
        --text="CHOOSE ENCODER:" \
        --column="#" --column="Encoder" --column="" \
        1 Amd "omx(vce) encoder" \
-       2 Intel "vaapi encoder" \
-       3 Software "Software x264 edcoder" `
+       2 Amd "vaapi(vce) encoder" \
+       3 Intel "vaapi encoder" \
+       4 Software "Software x264 edcoder" `
 
 if [ "$?" = 0 ]; then
 case "$DI" in 
@@ -158,12 +173,20 @@ case "$DI" in
 	   fi;;
        2)
 	   if  [[ "$GSTIN | grep $VAENC >/dev/null"  ]]
+	     then ENCODER="! $VAENC rate-control=2 bitrate=90000 ! h264parse "
+	     FORMAT="NV12"
+	     VIDEOCONV="! videoconvert"
+	     echo "Using $VAENC encoder"
+	    else echo "Gstreamer $VAENC not found"
+	   fi;;
+        3)
+	   if  [[ "$GSTIN | grep $VAENC >/dev/null"  ]]
 	     then ENCODER="$VAAPI "
 	     VIDEOCONV="! vaapipostproc format=i420"
 	     echo "Using $VAENC encoder"
 	    else echo "Gstreamer $VAENC not found"
 	   fi;;
-	3)
+	4)
 	     ENCODER="!  x264enc  speed-preset=faster qp-min=30 tune=zerolatency "
 	     echo "Using software encoder";;
 	*)
